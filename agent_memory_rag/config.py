@@ -35,6 +35,10 @@ class IngestConfig(BaseModel):
     patterns: list[str] = Field(
         default=["MEMORY.md", "memory/*.md", "AGENTS.md", "SOUL.md", "USER.md", "TOOLS.md"]
     )
+    exclude_patterns: list[str] = Field(
+        default=["backups/**", "drafts/**", "**/.archive/**"],
+        description="Glob patterns relative to workspace to exclude from indexing.",
+    )
     chunk_size: int = Field(default=DEFAULT_CHUNK_SIZE)
     chunk_overlap: int = Field(default=DEFAULT_CHUNK_OVERLAP)
 

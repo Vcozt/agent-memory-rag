@@ -92,12 +92,20 @@ def main():
     multiple=True,
     help="Glob pattern(s) to ingest (repeatable). Defaults to MEMORY.md, memory/*.md, AGENTS.md, SOUL.md, USER.md, TOOLS.md",
 )
+@click.option(
+    "--exclude",
+    "excludes",
+    multiple=True,
+    help="Glob pattern(s) to exclude from indexing (repeatable). Defaults to backups/**, drafts/**, **/.archive/**",
+)
 @common_options
-def ingest(workspace, patterns, db_path, provider, model, api_base, api_key, dim):
+def ingest(workspace, patterns, excludes, db_path, provider, model, api_base, api_key, dim):
     """Index memory files into the vector store."""
     cfg = _build_config(workspace, db_path, provider, model, api_base, api_key, dim)
     if patterns:
         cfg.ingest.patterns = list(patterns)
+    if excludes:
+        cfg.ingest.exclude_patterns = list(excludes)
 
     files = discover_files(cfg)
     if not files:
