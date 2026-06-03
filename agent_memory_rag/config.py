@@ -4,6 +4,8 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from .decay import DecayConfig
+
 
 # Default paths
 DEFAULT_WORKSPACE = Path.home() / ".openclaw" / "workspace"
@@ -35,6 +37,10 @@ class IngestConfig(BaseModel):
     patterns: list[str] = Field(
         default=["MEMORY.md", "memory/*.md", "AGENTS.md", "SOUL.md", "USER.md", "TOOLS.md"]
     )
+    exclude_patterns: list[str] = Field(
+        default=["backups/**", "drafts/**", "**/.archive/**"],
+        description="Glob patterns relative to workspace to exclude from indexing.",
+    )
     chunk_size: int = Field(default=DEFAULT_CHUNK_SIZE)
     chunk_overlap: int = Field(default=DEFAULT_CHUNK_OVERLAP)
 
@@ -45,3 +51,4 @@ class Config(BaseModel):
     db_path: Path = Field(default=DEFAULT_DB_PATH)
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
     ingest: IngestConfig = Field(default_factory=IngestConfig)
+    decay: DecayConfig = Field(default_factory=DecayConfig)

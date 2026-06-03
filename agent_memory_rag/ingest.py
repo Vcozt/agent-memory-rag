@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 from pathlib import Path
 from typing import Iterable
 
@@ -11,18 +12,49 @@ from .embedder import Embedder, batched
 from .store import MemoryStore
 
 
+def _is_excluded(path: Path, root: Path, exclude_patterns: list[str]) -> bool:
+    """Return True if path matches any exclude pattern (relative to root).
+
+    Patterns are matched against the POSIX-style relative path with
+    `fnmatch`, so `**` works as a recursive wildcard (matches any sequence
+    of path segments, including separators).
+    """
+    if not exclude_patterns:
+        return False
+    try:
+        rel = path.relative_to(root).as_posix()
+    except ValueError:
+        return False
+    for pat in exclude_patterns:
+        # Translate `**` (recursive) into something fnmatch handles.
+        # fnmatch treats `*` as matching any chars including `/`, which is
+        # fine for our recursive case; we just need to drop the doubled star
+        # so a pattern like "backups/**" matches "backups/foo/bar.md".
+        normalized = pat.replace("**/", "*/").replace("/**", "/*").replace("**", "*")
+        if fnmatch.fnmatch(rel, pat) or fnmatch.fnmatch(rel, normalized):
+            return True
+    return False
+
+
 def discover_files(config: Config) -> list[Path]:
-    """Walk workspace and return matching files based on config.ingest.patterns."""
+    """Walk workspace and return matching files based on config.ingest.patterns.
+
+    Files matching `config.ingest.exclude_patterns` are filtered out.
+    """
     root = config.ingest.workspace.expanduser().resolve()
+    excludes = list(config.ingest.exclude_patterns)
     seen: set[Path] = set()
     files: list[Path] = []
     for pattern in config.ingest.patterns:
         # Path.glob handles both single-segment ("MEMORY.md") and globs ("memory/*.md")
         for p in root.glob(pattern):
             p = p.resolve()
-            if p.is_file() and p not in seen:
-                seen.add(p)
-                files.append(p)
+            if not p.is_file() or p in seen:
+                continue
+            if _is_excluded(p, root, excludes):
+                continue
+            seen.add(p)
+            files.append(p)
     return sorted(files)
 
 
