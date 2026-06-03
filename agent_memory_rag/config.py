@@ -4,6 +4,8 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from .decay import DecayConfig
+
 
 # Default paths
 DEFAULT_WORKSPACE = Path.home() / ".openclaw" / "workspace"
@@ -49,3 +51,4 @@ class Config(BaseModel):
     db_path: Path = Field(default=DEFAULT_DB_PATH)
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
     ingest: IngestConfig = Field(default_factory=IngestConfig)
+    decay: DecayConfig = Field(default_factory=DecayConfig)
